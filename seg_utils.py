@@ -113,6 +113,7 @@ def calc_iou(model, loader):
     Returns:
         float: The average IoU across all batches.
     """
+    accuracy_list = []
     iou_list = []
     model.eval()
     with torch.no_grad():
@@ -121,6 +122,7 @@ def calc_iou(model, loader):
             targets = targets.to(next(model.parameters()).device)
             outputs = model(batch)
             iou = IoUmetric(outputs, targets)
+            accuracy_list.append((outputs.argmax(dim=1) == targets).float().mean())
             iou_list.append(iou.item())
     
-    return sum(iou_list) / len(iou_list)
+    return sum(iou_list) / len(iou_list), sum(accuracy_list) / len(accuracy_list)

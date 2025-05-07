@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import cv2
 import matplotlib.pyplot as plt
-import seg_utils
+from . import seg_utils
 
 def to_device(x):
     if torch.cuda.is_available():
@@ -159,6 +159,114 @@ def show_batch(inputs, targets, predictions=None):
     fig.subplots_adjust(wspace=0, hspace=0, left=0, right=1)
     plt.savefig('test.png', dpi=300, bbox_inches='tight')
     plt.show()
+
+class FCN8s(nn.Module):
+    def __init__(self, n_class=2, kernel_size=3):
+        super().__init__()
+        self.n_class = n_class
+
+        # Encoder (VGG-like architecture)
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(3, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2, return_indices=True)  # pool1
+        )
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 128, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2, return_indices=True)  # pool2
+        )
+        self.conv3 = nn.Sequential(
+            nn.Conv2d(128, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2, return_indices=True)  # pool3
+        )
+        self.conv4 = nn.Sequential(
+            nn.Conv2d(256, 512, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2, return_indices=True)  # pool4
+        )
+        self.conv5 = nn.Sequential(
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2, return_indices=True)  # pool5
+        )
+
+        # Fully connected layers converted to convolutional layers
+        self.fc6 = nn.Sequential(
+            nn.Conv2d(512, 4096, kernel_size=7, padding=3),
+            nn.ReLU(inplace=True),
+            nn.Dropout2d()
+        )
+        self.fc7 = nn.Sequential(
+            nn.Conv2d(4096, 4096, kernel_size=1),
+            nn.ReLU(inplace=True),
+            nn.Dropout2d()
+        )
+
+        # Final classifier (fc8)
+        self.fc8 = nn.Conv2d(4096, n_class, kernel_size=1)
+
+        # Skip connections
+        self.score_pool4 = nn.Conv2d(512, n_class, kernel_size=1)
+        self.score_pool3 = nn.Conv2d(256, n_class, kernel_size=1)
+
+        # Upsampling layers
+        self.upscore2 = nn.ConvTranspose2d(n_class, n_class, kernel_size=4, stride=2, padding=1)
+        self.upscore8 = nn.ConvTranspose2d(n_class, n_class, kernel_size=16, stride=8, padding=4)
+        self.upscore_pool4 = nn.ConvTranspose2d(n_class, n_class, kernel_size=4, stride=2, padding=1)
+
+    def forward(self, x):
+        # Encoder
+        x1, indices1 = self.conv1(x)  # pool1
+        x2, indices2 = self.conv2(x1)  # pool2
+        x3, indices3 = self.conv3(x2)  # pool3
+        x4, indices4 = self.conv4(x3)  # pool4
+        x5, indices5 = self.conv5(x4)  # pool5
+
+        # Fully connected layers
+        fc6 = self.fc6(x5)
+        fc7 = self.fc7(fc6)
+
+        # Final classifier (fc8)
+        score = self.fc8(fc7)
+
+        # Upsample by 2 and add skip connection from pool4
+        upscore2 = self.upscore2(score)
+        score_pool4 = self.score_pool4(x4)
+        score_pool4 = score_pool4[:, :, :upscore2.size(2), :upscore2.size(3)]  # Crop to match size
+        score = upscore2 + score_pool4
+
+        # Upsample by 2 and add skip connection from pool3
+        upscore_pool4 = self.upscore_pool4(score)
+        score_pool3 = self.score_pool3(x3)
+        score_pool3 = score_pool3[:, :, :upscore_pool4.size(2), :upscore_pool4.size(3)]  # Crop to match size
+        score = upscore_pool4 + score_pool3
+
+        # Final upsampling by 8
+        upscore8 = self.upscore8(score)
+        score = upscore8[:, :, :x.size(2), :x.size(3)]  # Crop to match input size
+
+        return score
+
+# class UNet(nn.module):
+    # pass
 
 
 if __name__ == "__main__":

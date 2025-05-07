@@ -7,13 +7,13 @@ import numpy as np
 import cv2 
 from skimage.filters import threshold_multiotsu
 import largestinteriorrectangle as lir  
-import visualisation
-import file_utils
+from . import visualisation
+from . import file_utils
 import os
 import matplotlib.pyplot as plt
 import tqdm
 
-def auto_crop(img: cv2.typing.MatLike,classes=3,edge_pixels=200,core_end_pixels=0, dilate_kernel = 5, dilate_iter = 10, erode_kernel=5, erode_iter=3) -> cv2.typing.MatLike:
+def auto_crop(img: cv2.typing.MatLike,classes=3,edge_pixels=200,core_end_pixels=0, dilate_kernel = 5, dilate_iter = 10, erode_kernel=5, erode_iter=3, produce_vis=False) -> cv2.typing.MatLike:
     """ crops image to rectangle based on colour thresholds
     Params:
         img (cv2.typing.MatLike) : image to crop
@@ -41,10 +41,16 @@ def auto_crop(img: cv2.typing.MatLike,classes=3,edge_pixels=200,core_end_pixels=
     #visualisation.show_image(thresholded_colour, eroded_colour, dilated_colour,mask,masked_image, alpha=False)
 
     x, y, w, h = cv2.boundingRect(largest_contour)
+    print(x,y,w,h)
+    cv2.rectangle(mask, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
     cropped_image = img[y+edge_pixels:y+h-edge_pixels, x+core_end_pixels:x+w-core_end_pixels]
     #print('cropped')
     
+
+    if produce_vis: 
+        return thresholded_colour, eroded_colour, dilated_colour, mask, cropped_image
+ 
     return cropped_image
 
 def threshold_image(channel: cv2.typing.MatLike, classes: int) -> cv2.typing.MatLike:

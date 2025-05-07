@@ -3,11 +3,11 @@ Todo:
     Deal with weird patches without just discarding
 """
 import cv2
-import file_utils
+from . import file_utils
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import visualisation
+from . import visualisation
 
 def patch_image(image: cv2.typing.MatLike, patch_size = 128) -> list[cv2.typing.MatLike]:
     """splits large image into a list of patches of size patch_size. image is 0 when patch overlaps

@@ -1,6 +1,6 @@
 import torch
-import seg_utils
-import segmentation
+from . import seg_utils
+from . import segmentation
 import matplotlib.pyplot as plt
 import tqdm
 
@@ -49,9 +49,9 @@ if __name__ == '__main__':
     )
     print(len(full_dataset))
 
-    train_data, test_data = torch.utils.data.random_split(full_dataset, [int(len(full_dataset)*0.8), int(len(full_dataset)) - int(len(full_dataset)*0.8)])
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=32, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size=32, shuffle=True)
+    train_data, test_data = torch.utils.data.random_split(full_dataset, [int(len(full_dataset)*0.3), int(len(full_dataset)) - int(len(full_dataset)*0.3)])
+    train_loader = torch.utils.data.DataLoader(train_data, batch_size=20, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(test_data, batch_size=20, shuffle=True)
 
     model = segmentation.to_device(segmentation.SegNet(kernel_size=3))
 

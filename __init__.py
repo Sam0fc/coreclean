@@ -7,19 +7,19 @@ Todo:
     arbritrary classes in background_removal
     strange patch sizes in patching
 """
-import background_removal
+from . import background_removal
 # import pre_processing
-import patching
-import seg_utils
-import segmentation
-import training
+from . import patching
+from . import seg_utils
+from . import segmentation
+from . import training
 # import statistical_analysis
-import chronology
-import visualisation
-import file_utils
-import torch
-import pipeline
+from . import chronology
+from . import visualisation
+from . import file_utils
+from . import pipeline
 
+import torch
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np

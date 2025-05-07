@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
-import file_utils
+from . import file_utils
 import os
 import pandas as pd
 

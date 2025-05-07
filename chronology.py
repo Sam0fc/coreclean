@@ -1,5 +1,5 @@
 import pandas as pd
-import file_utils
+from . import file_utils
 import matplotlib.pyplot as plt
 import cv2
 

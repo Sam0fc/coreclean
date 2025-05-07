@@ -1,6 +1,6 @@
-import seg_utils
-import segmentation
-import file_utils
+from . import seg_utils
+from . import segmentation
+from . import file_utils
 
 import torch
 import numpy as np

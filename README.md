@@ -18,12 +18,29 @@ git clone https://github.com/yourusername/CoreClean.git
 - tiffile
 - torch
 - torchvision
+- natsort
 
 ## Usage
+Put coreclean in a directory, and run this code. When prompted, put your model in model.pth and image in TO_PROCESS/ 
 ```python
+import coreclean
 
+print('coreclean')
+coreclean.setup_directories()
+print('enter image and model')
+input()
+print('removing background')
+coreclean.remove_background()
+print('making patches')
+coreclean.make_patches()
+print('processing patches')
+coreclean.process_patches()
+print('stitching patches')
+coreclean.stitch_patches()
+print('done')
 # Example usage
 ```
+Model and image for testing are available in the main directory, you'll have to move them to the right place.
 
 ## Documentation
 Documentation is an active WIP; Most code has docstrings.

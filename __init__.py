@@ -8,7 +8,7 @@ Todo:
     strange patch sizes in patching
 """
 from . import background_removal
-# import pre_processing
+from . import threshold
 from . import patching
 from . import seg_utils
 from . import segmentation
@@ -24,21 +24,73 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-MODEL_PATH = ""
+MODEL_PATH = "model.pth"
+
+
+import os
+def setup_directories():
+    directories = [
+        "./TO_PROCESS",
+        './NO_BG',
+        "./PATCHES",
+        "./PATCHRESULT",
+        "./STITCHED",
+    ]
+    for directory in directories:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+def remove_background():
+    """
+    Remove the background from images in the TO_PROCESS directory and save them to the NO_BG directory.
+    """
+    image_files = os.listdir("./TO_PROCESS")
+    for image_file in image_files:
+        image_path = os.path.join("./TO_PROCESS", image_file)
+        image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+        no_background = background_removal.auto_crop(image)
+        file_utils.save_image(no_background, path=os.path.join("./NO_BG", image_file))
+
+def make_patches():
+    """
+    Create patches from images in the NO_BG directory and save them to the PATCHES directory.
+    """
+    image_files = os.listdir("./NO_BG")
+    for image_file in image_files:
+        image_path = os.path.join("./NO_BG", image_file)
+        image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+        patches = patching.patch_image(image, patch_size=256)
+        file_utils.save_image(*patches, path=os.path.join("./PATCHES", image_file) + '-')
+
+def process_patches():
+    pipeline.run_model(patches_path="./PATCHES",save_path = './PATCHRESULT', model_path=MODEL_PATH, patch_size=256, kernel_size=5, batch_size=100, output_greyscale=False)
+
+def stitch_patches():
+    patching.restitch_images(originals_path="./NO_BG", patches_path="./PATCHRESULT", out_path='./STITCHED', patch_size=256)
+
 
 if __name__ == "__main__":
     # path = "./test_images/section.bmp"
 
-    print("coreclean")
+    #print("coreclean")
     #full_dataset = seg_utils.CustomImageDataset(
     #    image_dir="./test_images",
     #    transform=None,
     #    color_transform=None
     #)
 
-    patching.restitch_images(originals_path="./Dataset/339_Ship_Labelled/", patches_path="./solved_patches", patch_size=128)
+    #patching.restitch_images(originals_path="./Dataset/339_Ship_Labelled/", patches_path="./solved_patches", patch_size=128)
     #pipeline.run_model(patches_path="./Dataset/labelled_patches", model_path='segmentation_model.pth', patch_size=128, kernel_size=3)
-
+    
+    #lets test the iou
+    # Example usage of IoUmetric with dummy predictions and targets
+    batch_size = 32
+    for i in range(10):
+        dummy_predictions = torch.ones((batch_size, 2, 128,128)) # Random predictions with values between 0 and 1
+        dummy_targets = torch.randint(0, 2, (batch_size, 128, 128))  # Random binary ground truth masks
+        
+        iou_score = seg_utils.IoUmetric(dummy_predictions, dummy_targets)
+        print(f"IoU Score: {iou_score}")
 
     #fixed_random = torch.Generator().manual_seed(0)
     #train_data, test_data = torch.utils.data.random_split(full_dataset, [int(len(full_dataset)*0.9), int(len(full_dataset)*0.1)], generator=fixed_random)
@@ -130,4 +182,3 @@ if __name__ == "__main__":
     #no_background = background_removal.auto_crop(image,edge_pixels=0)
     #visualisation.show_image(image, no_background)
     #file_utils.save_image(no_background, path="./test_images/section.bmp")
-

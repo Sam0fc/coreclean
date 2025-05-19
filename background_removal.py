@@ -123,7 +123,7 @@ def test_params(kernel_range: int = 5, iterations_range: int = 10, path='./Datas
                             fails[dilate_kernel, dilate_iterations,erode_kernel,erode_iterations] += 1 
     return fails/UnCroppedDataset.__len__() # normalise by number of images
 
-def test_param(erode_kernel=7, erode_iter=3, dilate_kernel=7, dilate_iter=3, path='./Dataset/Exp_339'):
+def test_param(erode_kernel=5, erode_iter=3, dilate_kernel=5, dilate_iter=7, path='./coreclean/Dataset/Exp_339'):
     """tests the effect of different kernel sizes and iterations on the image
     Params:
         kernel_range (int) : range of kernel sizes to test
@@ -132,23 +132,25 @@ def test_param(erode_kernel=7, erode_iter=3, dilate_kernel=7, dilate_iter=3, pat
     white = 0
     short = 0 
     UnCroppedDataset = file_utils.ImageReader(path) 
-    for img, newpath in tqdm.tqdm(UnCroppedDataset):
-        test = auto_crop(img, dilate_kernel=dilate_kernel, dilate_iter=dilate_iter, erode_kernel=erode_kernel, erode_iter=erode_iter)
-        
-        size_constraints = (test.shape[1] > (200*150*0.95) and test.shape[1] < (200*150*1.05))  or (test.shape[1] > (200*120*0.95) and test.shape[1] < (200*120*1.05))
+    # Skip the first 380 images
+    for i, (img, newpath) in tqdm.tqdm(enumerate(UnCroppedDataset)):
+        if i > 380:
+            test = auto_crop(img, dilate_kernel=dilate_kernel, dilate_iter=dilate_iter, erode_kernel=erode_kernel, erode_iter=erode_iter)
+            
+            size_constraints = (test.shape[1] > (200*150*0.95) and test.shape[1] < (200*150*1.05))  or (test.shape[1] > (200*120*0.95) and test.shape[1] < (200*120*1.05))
 
-        if np.sum(np.all(test[:,0,:] > 240,axis=1))>test.shape[0]*0.2:
-            print(newpath)
-            #plt.imshow(test)
-            #plt.show()
-            white += 1
+            if np.sum(np.all(test[:,0,:] > 240,axis=1))>test.shape[0]*0.2:
+                print(newpath)
+                plt.imshow(test)
+                plt.show()
+                white += 1
 
-        elif not((newpath.__contains__('CC') or newpath.__contains__('H_7'))) and not size_constraints:
-            print(newpath)
-            print(test.shape[1])
-            #plt.imshow(test)
-            #plt.show()
-            short += 1
+            elif not((newpath.__contains__('CC') or newpath.__contains__('H_7'))) and not size_constraints:
+                print(newpath)
+                print(test.shape[1])
+                plt.imshow(test)
+                plt.show()
+                short += 1
 
 
     return (white+short)/UnCroppedDataset.__len__(),white,short # normalise by number of images
@@ -156,16 +158,17 @@ def test_param(erode_kernel=7, erode_iter=3, dilate_kernel=7, dilate_iter=3, pat
 if __name__ == "__main__":
     # test image
     print(test_param())
-   #UnCroppedDataset = file_utils.ImageReader("./Dataset/Exp_339")
-   # 
+    #UnCroppedDataset = file_utils.ImageReader("./coreclean/Dataset/339_Ship_Labelled/")
+   #
 
 
-   # cropped_imgs = []
-   # for img,path in UnCroppedDataset:
-   #     if os.path.exists(f"./Dataset/Cropped/{path}"):
-   #         print(f"Skipping {path}, already cropped.")
-   #         continue
-   #     cropped = auto_crop(img, classes=3, edge_pixels=200, core_end_pixels=0)
-   #     file_utils.save_image(cropped, path=f"./Dataset/Cropped/{path}")
-   # visualisation.show_image(*cropped_imgs, alpha=False)
-
+#    cropped_imgs = []
+#    for img,path in UnCroppedDataset:
+#        print(path)
+#        if os.path.exists(f"./Dataset/Cropped/{path}"):
+#            print(f"Skipping {path}, already cropped.")
+#            continue
+#        cropped = auto_crop(img, classes=3, edge_pixels=200, core_end_pixels=0)
+#        file_utils.save_image(cropped, path=f"./coreclean/Dataset/crop_label/{path}")
+#    #visualisation.show_image(*cropped_imgs, alpha=False)
+#

@@ -25,7 +25,7 @@ def patch_image(image: cv2.typing.MatLike, patch_size = 128) -> list[cv2.typing.
                 patches.append(patch)
     return patches
 
-def restitch_images(originals_path: str, patches_path: str, patch_size: 128):
+def restitch_images(originals_path: str, patches_path: str, patch_size: 128, out_path: str = './STITCHED') -> list[cv2.typing.MatLike]:
     """restitches patches into a single image
     Params:
         originals_path (str) : path to original images
@@ -49,7 +49,8 @@ def restitch_images(originals_path: str, patches_path: str, patch_size: 128):
             patch = file_utils.read_image(os.path.join(patches_path, files_with_stem[i]))
             if len(patch) > 0:
                 patches.append(patch[0])
-        file_utils.save_image(restitch_image(img, patches, patch_size),path='./stitches/'+stem + '.png')
+        print(out_path+ '/' + stem)
+        file_utils.save_image(restitch_image(img, patches, patch_size),path=out_path + '/' + stem)
     return stitched
 
 
@@ -62,7 +63,8 @@ def restitch_image(original: cv2.typing.MatLike,imgs: list[cv2.typing.MatLike], 
     Returns:
         cv2.typing.MatLike : stitched image
     """
-    stitched = np.zeros_like(original)
+
+    stitched = np.zeros((original.shape[0], original.shape[1], 4), dtype=np.uint8)
     x=0
     y=0
     for i, img in enumerate(imgs):
@@ -76,9 +78,13 @@ def restitch_image(original: cv2.typing.MatLike,imgs: list[cv2.typing.MatLike], 
     return stitched
 
 if __name__ == "__main__":
-    cropped_images = file_utils.ImageReader("./Dataset/339_Ship_Labelled")
-    for img,path in cropped_images:
-        patches = patch_image(img, patch_size=128)
-        file_utils.save_image(*patches, path=f"./Dataset/labelled_patches/{path}-")
+    #cropped_images = file_utils.ImageReader("./coreclean/Composite/Cropped/")
+    #for img,path in cropped_images:
+        #patches256 = patch_image(img, patch_size=256)
+        #patches128 = patch_image(img, patch_size=128)
+        #file_utils.save_image(*patches128, path=f"./coreclean/Composite/Patched128/{path}-")
+        #file_utils.save_image(*patches256, path=f"./coreclean/Composite/Patched256/{path}-")
 
-    restitch_images("./Dataset/339_Ship_Labelled", "./Dataset/labelled_patches", patch_size=128)
+    #file_utils.save_image(*patches128, path=f"./coreclean/Dataset/bigpatch/{path}-")
+
+    restitch_images("./coreclean/Dataset/ls/", "./coreclean/Dataset/SEC/LAST", patch_size=256)

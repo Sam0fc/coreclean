@@ -6,6 +6,7 @@ import os
 import natsort
 from tifffile import TiffFile
 import matplotlib.pyplot as plt
+import tqdm 
 
 def read_image(path: str, head: int = -1) -> list[cv2.typing.MatLike]:
     """read image from path"""
@@ -59,15 +60,16 @@ class ImageReader:
 
 def save_image(*imgs: list[cv2.typing.MatLike], path: str) -> None:
     """save images to path"""
+
     if len(imgs) == 1:
         cv2.imwrite(path, imgs[0])
-        print(f"saving {path}")
         return None
 
-    for i, img in enumerate(imgs):
+    print(f"saving {path}")
+    for i, img in tqdm.tqdm(enumerate(imgs)):
         fullpath = path + str(i) + ".png"
         cv2.imwrite(fullpath, img)
-        print(f"saving {i}")
+       
 
 def tif2png(path: str) -> cv2.typing.MatLike:
     """convert tif to png"""
